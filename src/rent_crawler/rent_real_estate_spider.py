@@ -2,7 +2,7 @@
 
 import scrapy
 
-from src.config import RES_DIR
+from src import RES_DIR
 
 class RentRealEstateSpider(scrapy.Spider):
     name = "rent_real_estate"
