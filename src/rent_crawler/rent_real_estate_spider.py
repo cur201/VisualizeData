@@ -4,7 +4,7 @@ import scrapy
 
 from src.config import RES_DIR
 
-class RealEstateSpider(scrapy.Spider):
+class RentRealEstateSpider(scrapy.Spider):
     name = "rent_real_estate"
 
     def __init__(self, *args, **kwargs):
