@@ -7,14 +7,14 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = "tutorial"
+BOT_NAME = "crawler"
 
-SPIDER_MODULES = ["tutorial.spiders"]
-NEWSPIDER_MODULE = "tutorial.spiders"
+SPIDER_MODULES = ["src.example_crawler", "src.rent_crawler"]
+# NEWSPIDER_MODULE = "src.spiders"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = "tutorial (+http://www.yourdomain.com)"
+#USER_AGENT = "tutorial (+http://www.yourdomain.com)"A
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -38,10 +38,13 @@ DOWNLOAD_TIMEOUT = 180
 #TELNETCONSOLE_ENABLED = False
 
 # Override the default request headers:
-#DEFAULT_REQUEST_HEADERS = {
-#    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-#    "Accept-Language": "en",
-#}
+DEFAULT_REQUEST_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+    'Referer': 'https://www.domain.com.au',
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en",
+    'Connection': 'keep-alive'
+}
 
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
