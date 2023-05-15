@@ -4,6 +4,7 @@ import scrapy
 
 from src import RES_DIR
 
+
 class RentRealEstateSpider(scrapy.Spider):
     name = "rent_real_estate"
 
@@ -27,6 +28,7 @@ class RentRealEstateSpider(scrapy.Spider):
     def _is_can_save_file(self):
         # todo: add condition for saving file
         return True
+
     def _save_file(self, url, content):
         page = url.split("=")[-1]
         file_name = '/'.join([RES_DIR, f"rent", f"page_{page}.html"])
@@ -50,6 +52,7 @@ class RentRealEstateSpider(scrapy.Spider):
             for li_selector in lis_selector:
                 self._get_rent_price(li_selector)
                 self._get_address(li_selector)
+
     def _get_rent_price(self, li_selector):
         rent_price = 0
         divs_selector = self._get_element_selector(li_selector,
@@ -66,6 +69,8 @@ class RentRealEstateSpider(scrapy.Spider):
         self.log(f"Rent price: {rent_price}")
 
     def _get_address(self, li_selector):
+        address_line1_str = ''
+        address_line2_str = []
         address = ''
         divs_selector = self._get_element_selector(li_selector,
                                                    "div[data-testid=\"listing-card-wrapper-premiumplus\"] > div")
@@ -73,16 +78,18 @@ class RentRealEstateSpider(scrapy.Spider):
             divs_selector = self._get_element_selector(li_selector,
                                                        "div[data-testid=\"listing-card-wrapper-elite\"] > div")
         if len(divs_selector) >= 2:
-            address_line1 = self._get_element_selector(divs_selector, "span[data-testid=\"address-line1\"]")
-            address_line2 = self._get_element_selector(divs_selector, "span[data-testid=\"address-line2\"] >span")
-            if len(address_line1) > 2 and len(address_line2) >2:
-                address_line1 = self._get_element_str(divs_selector, "span[data-testid=\"address-line1\"]::text")
-                address_line2 = self._get_element_selector(divs_selector, "span[data-testid=\"address-line2\"] > span")
-                address = ", ".join([address_line1, *[a.get() for a in address_line2]])
+            address_line1 = self._get_element_selector(divs_selector[1], "span[data-testid=\"address-line1\"]")
+            address_line2 = self._get_element_selector(divs_selector[1], "span[data-testid=\"address-line2\"] > span")
+
+            if len(address_line1) >= 1:
+                address_line1_str = self._get_element_str(divs_selector[1], "span[data-testid=\"address-line1\"]::text")
+
+            for address_element in address_line2:
+                address_line2_str.append(self._get_element_str(address_element, "::text"))
+
+            address = " - ".join([address_line1_str, ', '.join(address_line2_str)])
         self.log(f"Address: {address}")
+
     def customParse(self, response):
         self._response = response
         self._process()
-
-
-
