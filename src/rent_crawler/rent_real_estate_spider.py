@@ -19,7 +19,7 @@ class RentRealEstateSpider(scrapy.Spider):
 
         for url in urls:
             start_page = 1
-            end_page = 4
+            end_page = 51
             for page_number in range(start_page, end_page):
                 yield scrapy.Request(url=f"{url}?page={page_number}", callback=self.customParse)
 
