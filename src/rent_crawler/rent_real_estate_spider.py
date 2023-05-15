@@ -48,18 +48,38 @@ class RentRealEstateSpider(scrapy.Spider):
         for ul_selector in uls_selector:
             lis_selector = self._get_element_selector(ul_selector, "li[data-testid]")
             for li_selector in lis_selector:
-                rent_price = 0
-                divs_selector = self._get_element_selector(li_selector, "div[data-testid=\"listing-card-wrapper-premiumplus\"] > div")
-                if len(divs_selector) < 2:
-                    divs_selector = self._get_element_selector(li_selector, "div[data-testid=\"listing-card-wrapper-elite\"] > div")
+                self._get_rent_price(li_selector)
+                self._get_address(li_selector)
+    def _get_rent_price(self, li_selector):
+        rent_price = 0
+        divs_selector = self._get_element_selector(li_selector,
+                                                   "div[data-testid=\"listing-card-wrapper-premiumplus\"] > div")
+        if len(divs_selector) < 2:
+            divs_selector = self._get_element_selector(li_selector,
+                                                       "div[data-testid=\"listing-card-wrapper-elite\"] > div")
 
-                if len(divs_selector) >= 2:
-                    price_selector = self._get_element_selector(divs_selector[1], "p[data-testid=\"listing-card-price\"]")
-                    if len(price_selector) >= 1:
-                        rent_price = self._get_element_str(divs_selector[1], "p[data-testid=\"listing-card-price\"]::text")
+        if len(divs_selector) >= 2:
+            price_selector = self._get_element_selector(divs_selector[1], "p[data-testid=\"listing-card-price\"]")
+            if len(price_selector) >= 1:
+                rent_price = self._get_element_str(divs_selector[1], "p[data-testid=\"listing-card-price\"]::text")
 
-                self.log(f"Rent price: {rent_price}")
+        self.log(f"Rent price: {rent_price}")
 
+    def _get_address(self, li_selector):
+        address = ''
+        divs_selector = self._get_element_selector(li_selector,
+                                                   "div[data-testid=\"listing-card-wrapper-premiumplus\"] > div")
+        if len(divs_selector) < 2:
+            divs_selector = self._get_element_selector(li_selector,
+                                                       "div[data-testid=\"listing-card-wrapper-elite\"] > div")
+        if len(divs_selector) >= 2:
+            address_line1 = self._get_element_selector(divs_selector, "span[data-testid=\"address-line1\"]")
+            address_line2 = self._get_element_selector(divs_selector, "span[data-testid=\"address-line2\"] >span")
+            if len(address_line1) > 2 and len(address_line2) >2:
+                address_line1 = self._get_element_str(divs_selector, "span[data-testid=\"address-line1\"]::text")
+                address_line2 = self._get_element_selector(divs_selector, "span[data-testid=\"address-line2\"] > span")
+                address = ", ".join([address_line1, *[a.get() for a in address_line2]])
+        self.log(f"Address: {address}")
     def customParse(self, response):
         self._response = response
         self._process()
