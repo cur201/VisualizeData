@@ -19,7 +19,7 @@ class RentRealEstateSpider(scrapy.Spider):
 
         for url in urls:
             start_page = 1
-            end_page = 51
+            end_page = 4
             for page_number in range(start_page, end_page):
                 yield scrapy.Request(url=f"{url}?page={page_number}", callback=self.customParse)
 
@@ -52,6 +52,7 @@ class RentRealEstateSpider(scrapy.Spider):
             for li_selector in lis_selector:
                 self._get_rent_price(li_selector)
                 self._get_address(li_selector)
+                self._get_request_URL(li_selector)
 
     def _get_rent_price(self, li_selector):
         rent_price = 0
@@ -90,6 +91,20 @@ class RentRealEstateSpider(scrapy.Spider):
             address = " - ".join([address_line1_str, ', '.join(address_line2_str)])
         self.log(f"Address: {address}")
 
+    def _get_request_URL(self, li_selector):
+        request_url = ''
+        divs_selector = self._get_element_selector(li_selector,
+                                                   "div[data-testid=\"listing-card-wrapper-premiumplus\"] > div")
+        if len(divs_selector) < 2:
+            divs_selector = self._get_element_selector(li_selector,
+                                                       "div[data-testid=\"listing-card-wrapper-elite\"] > div")
+        if len(divs_selector) >= 2:
+            request_url = self._get_element_str(divs_selector[1],
+                                                "div > a::attr(href)")
+        self.log(f"URL: {request_url}")
+
     def customParse(self, response):
         self._response = response
         self._process()
+
+
