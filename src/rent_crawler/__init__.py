@@ -1,4 +1,4 @@
-﻿# This package will contain the spiders of your Scrapy project
-#
-# Please refer to the documentation for information on how to create and manage
-# your spiders.
+﻿from .spider.rent_detail_spider import RentDetailSpider
+from .item.rent_item import RentItem
+from .middleware.rent_middleware import RentMiddleware
+from .pipeline.rent_pipeline import RentPipeline
