@@ -1,4 +1,5 @@
 ﻿import scrapy
+import csv
 from src import get_element_selector, get_element_str
 
 class RentDetailSpider(scrapy.Spider):
@@ -22,11 +23,15 @@ class RentDetailSpider(scrapy.Spider):
     def _detail_process(self):
         DIV_PROPERTY_SELECTOR = 'div[data-testid="listing-details__summary-left-column"]'
         property_selector = get_element_selector(self._response, DIV_PROPERTY_SELECTOR)
-        self._get_rent_price(property_selector)
-        self._get_address(property_selector)
-        self._get_property_info(property_selector)
-        self._get_property_type(property_selector)
+        rent_price = self._get_rent_price(property_selector)
+        address = self._get_address(property_selector)
+        property_info = self._get_property_info(property_selector)
+        property_type = self._get_property_type(property_selector)
 
+        # with open('./res/data/rent-data.csv', mode='w', newline='') as file:
+        #     writer = csv.writer(file)
+        #     writer.writerow(['Rent price', 'Address', 'Property Info', 'Property Type'])
+        #     writer.writerow([rent_price, address, property_info, property_type])
     def _get_rent_price(self, property_selector):
         rent_price = ''
         DIV_PRICE_SELECTOR = 'div[data-testid="listing-details__summary-title"]'
@@ -36,6 +41,7 @@ class RentDetailSpider(scrapy.Spider):
         else:
             rent_price = '-'
         print(f"Rent price: {rent_price}")
+        return rent_price
 
     def _get_address(self, property_selector):
         address = ''
@@ -47,6 +53,7 @@ class RentDetailSpider(scrapy.Spider):
         else:
             address = '-'
         print(f"Address: {address}")
+        return address
 
     def _get_property_info(self, property_selector):
         property_info = ''
@@ -69,6 +76,7 @@ class RentDetailSpider(scrapy.Spider):
         else:
             property_info = '-'
         print(f"Property Info: {property_info}")
+        return property_info
 
 
     def _get_property_type(self, property_selector):
@@ -83,3 +91,4 @@ class RentDetailSpider(scrapy.Spider):
         else:
             property_type = ''
         print(f"Property Type: {property_type}")
+        return property_type
