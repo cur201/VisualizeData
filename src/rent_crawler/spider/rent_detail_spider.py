@@ -25,7 +25,7 @@ class RentDetailSpider(scrapy.Spider):
         self._get_rent_price(property_selector)
         self._get_address(property_selector)
         self._get_property_info(property_selector)
-        # self._get_property_type(property_selector)
+        self._get_property_type(property_selector)
 
     def _get_rent_price(self, property_selector):
         rent_price = ''
@@ -35,7 +35,7 @@ class RentDetailSpider(scrapy.Spider):
             rent_price = get_element_str(div_selector[0], "::text")
         else:
             rent_price = '-'
-        self.log(f"Rent price: {rent_price}")
+        print(f"Rent price: {rent_price}")
 
     def _get_address(self, property_selector):
         address = ''
@@ -46,27 +46,40 @@ class RentDetailSpider(scrapy.Spider):
             address = get_element_str(div_selector, TEXT_ADDRESS)
         else:
             address = '-'
-        # address = ''
-
-        self.log(f"Address: {address}")
+        print(f"Address: {address}")
 
     def _get_property_info(self, property_selector):
-        room_info = ''
-        room_features_str = []
-        DIV_PROPERTY_INFO_SELECTOR = "div[data-testid=\"property-features-wrapper\"] > span[data-testid=\"property-features-feature\"]"
+        property_info = ''
+        property_numbers_str = []
+        property_type_str = []
 
-        room_features = get_element_selector(property_selector, DIV_PROPERTY_INFO_SELECTOR)
-        for feature in room_features:
-            feature_text = get_element_str(feature, "span[data-testid=\"property-features-text\"]::text")
-            if feature_text:
-                room_features_str.append(feature_text.strip())
+        DIV_PROPERTY_INFO_SUMMARY = 'div[data-testid="property-features"]'
+        DIV_PROPERTY_INFO_SELECTOR = 'span[data-testid="property-features-feature"] > span'
+        SPAN_PROPERTY_INFO_TYPE_SELECTOR = 'span[data-testid="property-features-text"]'
+        property_div_selector = get_element_selector(property_selector, DIV_PROPERTY_INFO_SUMMARY)
 
-        if room_features_str:
-            room_info = ', '.join(room_features_str)
+        property_div_selector = get_element_selector(property_div_selector, DIV_PROPERTY_INFO_SELECTOR)
+        for selector in property_div_selector:
+            property_numbers_str.append(get_element_str(selector, '::text'))
+            property_type = get_element_selector(selector, SPAN_PROPERTY_INFO_TYPE_SELECTOR)
+            property_type_str.append(get_element_str(property_type, '::text'))
+
+        if len(property_numbers_str) >= 1:
+            property_info = ', '.join([f"{number} {ptype}" for number, ptype in zip(property_numbers_str, property_type_str)])
         else:
-            room_info = '-'
+            property_info = '-'
+        print(f"Property Info: {property_info}")
 
-        self.log(f"Room Info: {room_info}")
 
-    def _get_property_type(self):
-       pass
+    def _get_property_type(self, property_selector):
+
+        property_type = ''
+
+        DIV_PROPERTY_TYPE = 'div[data-testid="listing-summary-property-type"] > span'
+        property_type_selector = get_element_selector(property_selector, DIV_PROPERTY_TYPE)
+
+        if len(property_type_selector) >=1 :
+            property_type = get_element_str(property_type_selector[0], "::text")
+        else:
+            property_type = ''
+        print(f"Property Type: {property_type}")
