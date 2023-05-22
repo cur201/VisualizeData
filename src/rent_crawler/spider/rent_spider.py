@@ -27,7 +27,7 @@ class RentSpider(scrapy.Spider):
 
         for url in urls:
             start_page = 1
-            end_page = 3
+            end_page = 2
             for page_number in range(start_page, end_page):
                 yield scrapy.Request(url=f"{url}?page={page_number}", callback=self.custom_parse)
 
