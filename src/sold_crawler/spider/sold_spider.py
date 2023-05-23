@@ -1,18 +1,18 @@
-﻿import scrapy
+import scrapy
 
 from src import save_file, get_element_selector, get_element_str, get_request_URL
-from src.rent_crawler import RentItem
+from src.sold_crawler import SoldItem
 
 
-class RentSpider(scrapy.Spider):
-    name = "rent"
-    folder_name = "rent"
+class SoldSpider(scrapy.Spider):
+    name = 'sold'
+    folder_name = 'sold'
     custom_settings = {
         'SPIDER_MIDDLEWARES': {
-            'src.rent_crawler.RentMiddleware': 1
+            'src.sold_crawler.SoldMiddleware': 1
         },
         'ITEM_PIPELINES': {
-            'src.rent_crawler.RentPipeline': 1
+            'src.sold_crawler.SoldPipeline': 1
         }
     }
 
@@ -22,34 +22,23 @@ class RentSpider(scrapy.Spider):
 
     def start_requests(self):
         urls = [
-            "https://www.domain.com.au/rent/"
+            "https://www.domain.com.au/sold-listings/"
         ]
 
         for url in urls:
             start_page = 1
-            end_page = 3
+            end_page = 2
             for page_number in range(start_page, end_page):
-                yield scrapy.Request(url=f"{url}?page={page_number}", callback=self.custom_parse)
+                yield scrapy.Request(url=f"{url}?page={page_number}", callback=self.sold_parse)
+
+    def sold_parse(self, response):
+        self._response = response
+        items = self._process()
+        yield SoldItem(soldList = items)
 
     def _is_can_save_file(self):
         # todo: add condition for saving file
         return True
-
-    def _get_request_URL(self, li_selector):
-        request_url = ''
-        DIV_PARAM_SELECTOR = "div[data-testid=\"listing-card-wrapper-premiumplus\"] > div"
-        ALTER_DIV_PARAM_SELECTOR = "div[data-testid=\"listing-card-wrapper-elite\"] > div"
-        REQUEST_ATTR_SELECTOR = "div > a::attr(href)"
-
-        divs_selector = get_element_selector(li_selector, DIV_PARAM_SELECTOR)
-
-        if len(divs_selector) < 2:
-            divs_selector = get_element_selector(li_selector, ALTER_DIV_PARAM_SELECTOR)
-
-        if len(divs_selector) >= 2:
-            request_url = get_element_str(divs_selector[1], REQUEST_ATTR_SELECTOR)
-
-        return request_url
 
     def _process(self):
         if self._is_can_save_file() == True:
@@ -60,7 +49,6 @@ class RentSpider(scrapy.Spider):
                 content=self._response.body
             )
 
-        # print(f"{self._response.meta}")
         UL_PARAM_SELECTOR = "ul[data-testid=\"results\"]"
         LI_PARAM_SELECTOR = "li[data-testid]"
 
@@ -80,7 +68,3 @@ class RentSpider(scrapy.Spider):
         output[len(output)-1]['endPage'] = True
         return output
 
-    def custom_parse(self, response):
-        self._response = response
-        items = self._process()
-        yield RentItem(list = items)

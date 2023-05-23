@@ -9,7 +9,7 @@
 
 BOT_NAME = "crawler"
 
-SPIDER_MODULES = ["src.rent_crawler"]
+SPIDER_MODULES = ["src.rent_crawler", "src.sold_crawler"]
 # NEWSPIDER_MODULE = "src.spiders"
 
 
