@@ -35,22 +35,6 @@ class RentSpider(scrapy.Spider):
         # todo: add condition for saving file
         return True
 
-    def _get_request_URL(self, li_selector):
-        request_url = ''
-        DIV_PARAM_SELECTOR = "div[data-testid=\"listing-card-wrapper-premiumplus\"] > div"
-        ALTER_DIV_PARAM_SELECTOR = "div[data-testid=\"listing-card-wrapper-elite\"] > div"
-        REQUEST_ATTR_SELECTOR = "div > a::attr(href)"
-
-        divs_selector = get_element_selector(li_selector, DIV_PARAM_SELECTOR)
-
-        if len(divs_selector) < 2:
-            divs_selector = get_element_selector(li_selector, ALTER_DIV_PARAM_SELECTOR)
-
-        if len(divs_selector) >= 2:
-            request_url = get_element_str(divs_selector[1], REQUEST_ATTR_SELECTOR)
-
-        return request_url
-
     def _process(self):
         if self._is_can_save_file() == True:
             save_file(
