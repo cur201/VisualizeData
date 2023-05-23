@@ -51,6 +51,28 @@ class RentSpider(scrapy.Spider):
 
         return request_url
 
+    def _get_address_line1(self, li_selector):
+        address1 = ''
+        ADDRESS_SELECTOR = "span[data-testid=\"address-line1\"]"
+        address1_selectors = get_element_selector(li_selector, ADDRESS_SELECTOR)
+
+        if len(address1_selectors) > 0:
+            address1 = get_element_str(address1_selectors[0], "::text")
+
+        return address1
+
+
+    def _get_address_line2(self, li_selector):
+        address2 = []
+        TEST_SELECTOR = "span[data-testid=\"address-line2\"] > span"
+        address2_selectors = get_element_selector(li_selector, TEST_SELECTOR)
+
+        if len(address2_selectors) > 0:
+            for selector in address2_selectors:
+                address2.append(get_element_str(selector, '::text'))
+
+        return address2
+
     def _process(self):
         if self._is_can_save_file() == True:
             save_file(
@@ -72,9 +94,17 @@ class RentSpider(scrapy.Spider):
 
             for li_selector in lis_selector:
                 request_url = self._get_request_URL(li_selector)
-                if len(request_url) > 0:
+                address = self._get_address_line1(li_selector)
+                address2 = self._get_address_line2(li_selector)
+
+                if len(request_url) > 0 and len(address) > 0 and len(address2) > 0:
+                    city, region, postcode = address2
                     output.append({
                         'url': request_url,
+                        'address': address,
+                        'city': city,
+                        'region': region,
+                        'postcode': postcode,
                         'endPage': False
                     })
         output[len(output)-1]['endPage'] = True
