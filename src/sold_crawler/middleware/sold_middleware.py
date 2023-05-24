@@ -1,8 +1,8 @@
-﻿from scrapy import signals
+from scrapy import signals
 from src import spider_opened
 
 
-class RentMiddleware:
+class SoldMiddleware:
     @classmethod
     def from_crawler(cls, crawler):
         # This method is used by Scrapy to create your spiders.
@@ -15,7 +15,6 @@ class RentMiddleware:
         # middleware and into the spider.
 
         # Should return None or raise an exception.
-        print(f'[{spider.name}_INPUT]: {response}')
         return None
 
     def process_spider_output(self, response, result, spider):
@@ -23,7 +22,6 @@ class RentMiddleware:
         # it has processed the response.
 
         # Must return an iterable of Request, or item objects.
-        print(f'[{spider.name}_OUTPUT]: {response} -- {result}')
         for i in result:
             yield i
 
@@ -41,6 +39,5 @@ class RentMiddleware:
 
         # Must return only requests (not items).
 
-        print(f'[{spider.name}_START_REQUEST]: {start_requests}')
         for r in start_requests:
             yield r

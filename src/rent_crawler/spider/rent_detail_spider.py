@@ -2,7 +2,7 @@
 import scrapy
 import os
 import pandas as pd
-from src import get_element_selector, get_element_str
+from src import get_element_selector, get_element_str, get_address, get_property_info, get_property_type
 
 
 class RentDetailSpider(scrapy.Spider):
@@ -57,7 +57,6 @@ class RentDetailSpider(scrapy.Spider):
             detail_item['garage'] = '1' if garage == '−' else garage
             detail_item['price'] = price
             self._export_to_csv(detail_item)
-
 
     def _export_to_csv(self, detail_item):
         export_file = 'rent-data.csv'

@@ -1,6 +1,6 @@
 ﻿import scrapy
 
-from src import save_file, get_element_selector, get_element_str
+from src import save_file, get_element_selector, get_element_str, get_request_URL
 from src.rent_crawler import RentItem
 
 
