@@ -70,21 +70,23 @@ def get_property_info(property_selector):
         property_type_str.append(get_element_str(property_type, '::text'))
 
     if len(property_numbers_str) >= 1:
-        property_info = ', '.join([f"{number} {ptype}" for number, ptype in zip(property_numbers_str, property_type_str)])
+        property_info = ', '.join(
+            [f"{number} {ptype}" for number, ptype in zip(property_numbers_str, property_type_str)])
     else:
         property_info = '-'
+
+    if len(property_numbers_str) > 3:
+        property_numbers_str = property_numbers_str[:3]
     print(f"Property Info: {property_info}")
-    return property_info
+    return property_numbers_str
 
 
 def get_property_type(property_selector):
-
     property_type = ''
-
     DIV_PROPERTY_TYPE = 'div[data-testid="listing-summary-property-type"] > span'
     property_type_selector = get_element_selector(property_selector, DIV_PROPERTY_TYPE)
 
-    if len(property_type_selector) >=1 :
+    if len(property_type_selector) >= 1:
         property_type = get_element_str(property_type_selector[0], "::text")
     else:
         property_type = ''
