@@ -2,8 +2,12 @@ import scrapy
 
 
 class SoldDetailItem(scrapy.Item):
-    addr = scrapy.Field()
-    rooms = scrapy.Field()
+    address = scrapy.Field()
+    city = scrapy.Field()
+    region = scrapy.Field()
+    bedroom = scrapy.Field()
+    bathroom = scrapy.Field()
+    garage = scrapy.Field()
     type = scrapy.Field()
     price = scrapy.Field()
     date_sold = scrapy.Field()

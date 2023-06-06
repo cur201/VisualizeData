@@ -1,6 +1,6 @@
 import scrapy
 
-from src import save_file, get_element_selector, get_element_str, get_request_URL
+from src import save_file, get_element_selector, get_request_URL, get_address_line1, get_address_line2, is_can_save_file
 from src.sold_crawler import SoldItem
 
 
@@ -27,7 +27,7 @@ class SoldSpider(scrapy.Spider):
 
         for url in urls:
             start_page = 1
-            end_page = 2
+            end_page = 51
             for page_number in range(start_page, end_page):
                 yield scrapy.Request(url=f"{url}?page={page_number}", callback=self.sold_parse)
 
@@ -36,12 +36,8 @@ class SoldSpider(scrapy.Spider):
         items = self._process()
         yield SoldItem(soldList = items)
 
-    def _is_can_save_file(self):
-        # todo: add condition for saving file
-        return True
-
     def _process(self):
-        if self._is_can_save_file() == True:
+        if is_can_save_file():
             save_file(
                 spider=self,
                 folder_name=self.folder_name,
@@ -60,9 +56,17 @@ class SoldSpider(scrapy.Spider):
 
             for li_selector in lis_selector:
                 request_url = get_request_URL(li_selector)
-                if len(request_url) > 0:
+                address_line_1 = get_address_line1(li_selector)
+                address_line_2 = get_address_line2(li_selector)
+
+                if len(request_url) > 0 and len(address_line_1) > 0 and len(address_line_2) > 0:
+                    city, region, postcode = address_line_2
                     output.append({
                         'url': request_url,
+                        'address': address_line_1,
+                        'city': city,
+                        'region': region,
+                        'postcode': postcode,
                         'endPage': False
                     })
         output[len(output)-1]['endPage'] = True

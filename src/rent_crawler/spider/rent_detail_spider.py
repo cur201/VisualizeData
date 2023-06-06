@@ -2,7 +2,8 @@
 import scrapy
 import os
 import pandas as pd
-from src import get_element_selector, get_element_str, get_address, get_property_info, get_property_type
+import re
+from src import get_element_selector, get_element_str, get_property_info, get_property_type
 
 
 class RentDetailSpider(scrapy.Spider):
@@ -49,13 +50,17 @@ class RentDetailSpider(scrapy.Spider):
         detail_item['type'] = get_property_type(property_selector)
         property_info = get_property_info(property_selector)
         price = self._get_rent_price(property_selector)
-        if len(property_info) > 0 and price > 0:
-            bedroom, bathroom, garage = property_info
-            detail_item['bedroom'] = '1' if bedroom == '−' else bedroom
-            detail_item['bathroom'] = '1' if bathroom == '−' else bathroom
-            detail_item['garage'] = '1' if garage == '−' else garage
+        if len(property_info) > 0:
+            if len(property_info) == 3:
+                bedroom, bathroom, garage = property_info
+            else:
+                bedroom, bathroom, garage = '-', '-', '-'
+            detail_item['bedroom'] = bedroom
+            detail_item['bathroom'] = bathroom
+            detail_item['garage'] = garage
             detail_item['price'] = price
-            self._export_to_csv(detail_item)
+
+        self._export_to_csv(detail_item)
 
     def _export_to_csv(self, detail_item):
         export_file = 'rent-data.csv'
@@ -82,15 +87,22 @@ class RentDetailSpider(scrapy.Spider):
         df.to_csv(output_path, mode='a', header=False, index=False)
 
     def _get_rent_price(self, property_selector):
-        rent_price = ''
+        # rent_price = ''
         DIV_PRICE_SELECTOR = 'div[data-testid="listing-details__summary-title"]'
         div_selector = get_element_selector(property_selector, DIV_PRICE_SELECTOR)
         if len(div_selector) >= 1:
-            rent_price = get_element_str(div_selector[0], "::text").split(' ')[0].replace("$", "").replace(",", "").split('.')[0]
+            # rent_price = get_element_str(div_selector[0], "::text").split(' ')[0].replace("$", "").replace(",",
+            # "").split('.')[0]
+            rent_price = get_element_str(div_selector[0], "::text")
+            # if "$" not in price_text:
+            #     return 0
+            # else:
+            #     match = re.search(r"\b(\d+(?:,\d+)?(?:.\d+)?)(?:\s*(?:pw|per week|pcm))?\b", price_text)
+            #     if match:
+            #         rent_price = match.group(1).replace(",", "")
+            #     else:
+            #         rent_price = '-'
         else:
             rent_price = '-'
         print(f"Rent price: {rent_price}")
-        if rent_price == 'Leased':
-            return 0
-        else:
-            return int(rent_price)
+        return rent_price

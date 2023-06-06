@@ -19,6 +19,7 @@ def save_file(spider, folder_name, name, content):
     else:
         print(f"[UTILS_SAVE_FILE]: {file_name}")
 
+
 def get_request_URL(element_selector):
     request_url = ''
     DIV_PARAM_SELECTORS = [
@@ -38,8 +39,10 @@ def get_request_URL(element_selector):
 
     return request_url
 
+
 def spider_opened(spider):
     print(f"[{spider.name}_SPIDER_OPEN]: {spider.name}")
+
 
 def get_address(property_selector):
     address = ''
@@ -52,6 +55,7 @@ def get_address(property_selector):
         address = '-'
     print(f"Address: {address}")
     return address
+
 
 def get_property_info(property_selector):
     property_info = ''
@@ -93,14 +97,43 @@ def get_property_type(property_selector):
     print(f"Property Type: {property_type}")
     return property_type
 
+
 def get_date_sold(property_selector):
     date_sold = ''
 
     DIV_DATE_SOLD = 'span[data-testid="listing-details__listing-tag"]'
     date_sold_selector = get_element_selector(property_selector, DIV_DATE_SOLD)
-    if len(date_sold_selector) >=1 :
+    if len(date_sold_selector) >= 1:
         date_sold = get_element_str(date_sold_selector[0], "::text")
     else:
         date_sold = ''
     print(f'Date Sold: {date_sold}')
     return date_sold
+
+
+def get_address_line1(li_selector):
+    address1 = ''
+    ADDRESS_SELECTOR = "span[data-testid=\"address-line1\"]"
+    address1_selectors = get_element_selector(li_selector, ADDRESS_SELECTOR)
+
+    if len(address1_selectors) > 0:
+        address1 = get_element_str(address1_selectors[0], "::text")
+
+    return address1
+
+
+def get_address_line2(li_selector):
+    address2 = []
+    TEST_SELECTOR = "span[data-testid=\"address-line2\"] > span"
+    address2_selectors = get_element_selector(li_selector, TEST_SELECTOR)
+
+    if len(address2_selectors) > 0:
+        for selector in address2_selectors:
+            address2.append(get_element_str(selector, '::text'))
+
+    return address2
+
+
+def is_can_save_file():
+    # todo: add condition for saving file
+    return True
