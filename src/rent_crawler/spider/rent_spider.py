@@ -1,6 +1,6 @@
 ﻿import scrapy
 
-from src import save_file, get_element_selector, get_request_URL, get_address_line1, get_address_line2, is_can_save_file
+from src import save_file, get_element_selector, get_element_str, is_can_save_file
 from src.rent_crawler import RentItem
 
 
@@ -22,14 +22,14 @@ class RentSpider(scrapy.Spider):
 
     def start_requests(self):
         urls = [
-            "https://www.domain.com.au/rent/"
+            "https://www.realtor.com/apartments/New-York"
         ]
 
         for url in urls:
             start_page = 1
-            end_page = 51
+            end_page = 206
             for page_number in range(start_page, end_page):
-                yield scrapy.Request(url=f"{url}?page={page_number}", callback=self.custom_parse)
+                yield scrapy.Request(url=f"{url}/pg-{page_number}", callback=self.custom_parse)
 
     def custom_parse(self, response):
         self._response = response
@@ -37,40 +37,57 @@ class RentSpider(scrapy.Spider):
         yield RentItem(list=items)
 
     def _process(self):
-        if is_can_save_file():
-            save_file(
-                spider=self,
-                folder_name=self.folder_name,
-                name=f'page_{self._response.url.split("=")[-1]}.html',
-                content=self._response.body
-            )
-
-        # print(f"{self._response.meta}")
-        UL_PARAM_SELECTOR = "ul[data-testid=\"results\"]"
-        LI_PARAM_SELECTOR = "li[data-testid]"
+        SECTION_PARAM_SELECTOR = "section.PropertiesList_propertiesContainer__7NakV.PropertiesList_listViewGrid__TYNow"
+        DIV_PARAM_SELECTOR = "div.BasePropertyCard_propertyCardWrap__zydWk"
 
         output = []
-        uls_selector = get_element_selector(self._response, UL_PARAM_SELECTOR)
+        sections = get_element_selector(self._response, SECTION_PARAM_SELECTOR)
 
-        for ul_selector in uls_selector:
-            lis_selector = get_element_selector(ul_selector, LI_PARAM_SELECTOR)
+        for section in sections:
+            divs = get_element_selector(section, DIV_PARAM_SELECTOR)
 
-            for li_selector in lis_selector:
-                request_url = get_request_URL(li_selector)
-                address = get_address_line1(li_selector)
-                address2 = get_address_line2(li_selector)
+            for div in divs:
+                request_url = self._get_request_URL(div)
+                municipality = self._get_rent_municipality(div)
+                rental_type = self._get_rental_type(div)
 
-                if len(request_url) > 0 and len(address) > 0 and len(address2) > 0:
-                    city, region, postcode = address2
+                if len(request_url) and len(municipality) and len(rental_type):
                     output.append({
                         'url': request_url,
-                        'address': address,
-                        'city': city,
-                        'region': region,
-                        'postcode': postcode,
+                        'municipality': municipality,
+                        'rental_type': rental_type,
                         'endPage': False
                     })
         output[len(output) - 1]['endPage'] = True
+        print(output)
         return output
+
+    def _get_request_URL(self, element_selector):
+        request_url = 'https://www.realtor.com'
+        DIV_CONTAINER_SELECTOR = 'div.iclkph'
+        REQUEST_ATTR_SELECTOR = "a::attr(href)"
+
+        container = get_element_selector(element_selector, DIV_CONTAINER_SELECTOR)
+        request_url += get_element_str(container, REQUEST_ATTR_SELECTOR)
+        return request_url
+
+    def _get_rent_municipality(self, element_selector):
+        DIV_CONTAINER_SELECTOR = 'div.iclkph'
+        DIV_ADDRESS_SELECTOR = 'div.card-address.truncate-line[data-testid="card-address"]'
+        ADDRESS_SELECTOR = 'div.truncate-line[data-testid="card-address-2"]'
+        container = get_element_selector(element_selector, DIV_CONTAINER_SELECTOR)
+        div_address = get_element_selector(container, DIV_ADDRESS_SELECTOR)
+        address = get_element_selector(div_address, ADDRESS_SELECTOR)
+        if len(address):
+            return get_element_str(address, '::text')
+        else:
+            return get_element_str(div_address, '::text')
+
+    def _get_rental_type(self, element_selector):
+        DIV_CONTAINER_SELECTOR = 'div.iclkph'
+        RENTAL_TYPE_SELECTOR = 'div[data-testid="card-description"] > div'
+        container = get_element_selector(element_selector, DIV_CONTAINER_SELECTOR)
+        rental_type = get_element_selector(container, RENTAL_TYPE_SELECTOR)
+        return get_element_str(rental_type, '::text')
 
 

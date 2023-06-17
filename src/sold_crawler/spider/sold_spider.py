@@ -1,6 +1,6 @@
 import scrapy
 
-from src import save_file, get_element_selector, get_request_URL, get_address_line1, get_address_line2, is_can_save_file
+from src import save_file, get_element_selector, get_element_str, is_can_save_file
 from src.sold_crawler import SoldItem
 
 
@@ -22,53 +22,58 @@ class SoldSpider(scrapy.Spider):
 
     def start_requests(self):
         urls = [
-            "https://www.domain.com.au/sold-listings/"
+            "https://www.realtor.com/realestateandhomes-search/New-York/show-recently-sold"
         ]
 
         for url in urls:
             start_page = 1
-            end_page = 51
+            end_page = 2
             for page_number in range(start_page, end_page):
-                yield scrapy.Request(url=f"{url}?page={page_number}", callback=self.sold_parse)
+                yield scrapy.Request(url=f"{url}/pg-{page_number}", callback=self.sold_parse)
 
     def sold_parse(self, response):
         self._response = response
         items = self._process()
-        yield SoldItem(soldList = items)
+        yield SoldItem(soldList=items)
 
     def _process(self):
-        if is_can_save_file():
-            save_file(
-                spider=self,
-                folder_name=self.folder_name,
-                name=f'page_{self._response.url.split("=")[-1]}.html',
-                content=self._response.body
-            )
-
-        UL_PARAM_SELECTOR = "ul[data-testid=\"results\"]"
-        LI_PARAM_SELECTOR = "li[data-testid]"
+        SECTION_PARAM_SELECTOR = 'section.PropertiesList_propertiesContainer__j6ct_.PropertiesList_listViewGrid__oGuSL'
+        DIV_PARAM_SELECTOR = 'div.BasePropertyCard_propertyCardWrap__J0xUj'
 
         output = []
-        uls_selector = get_element_selector(self._response, UL_PARAM_SELECTOR)
+        sections = get_element_selector(self._response, SECTION_PARAM_SELECTOR)
+        print(sections)
+        print(sections)
 
-        for ul_selector in uls_selector:
-            lis_selector = get_element_selector(ul_selector, LI_PARAM_SELECTOR)
+        for section in sections:
+            divs = get_element_selector(section, DIV_PARAM_SELECTOR)
+            for div in divs:
+                request_url = self._get_request_URL(div)
+                sold_date = self._get_sold_date(div)
 
-            for li_selector in lis_selector:
-                request_url = get_request_URL(li_selector)
-                address_line_1 = get_address_line1(li_selector)
-                address_line_2 = get_address_line2(li_selector)
+                print(request_url, sold_date)
 
-                if len(request_url) > 0 and len(address_line_1) > 0 and len(address_line_2) > 0:
-                    city, region, postcode = address_line_2
+                if len(request_url) and len(sold_date):
                     output.append({
                         'url': request_url,
-                        'address': address_line_1,
-                        'city': city,
-                        'region': region,
-                        'postcode': postcode,
+                        'sold_date': sold_date,
                         'endPage': False
                     })
-        output[len(output)-1]['endPage'] = True
+        output[len(output) - 1]['endPage'] = True
         return output
 
+    def _get_request_URL(self, element_selector):
+        request_url = 'https://www.realtor.com'
+        DIV_CONTAINER_SELECTOR = 'div[data-testid="card-content"]'
+        REQUEST_ATTR_SELECTOR = "a::attr(href)"
+
+        container = get_element_selector(element_selector, DIV_CONTAINER_SELECTOR)
+        request_url += get_element_str(container, REQUEST_ATTR_SELECTOR)
+        return request_url
+
+    def _get_sold_date(self, element_selector):
+        DIV_CONTAINER_SELECTOR = 'div[data-testid="card-content"]'
+        SOLD_DATE_SELECTOR = 'div.message'
+        container = get_element_selector(element_selector, DIV_CONTAINER_SELECTOR)
+        sold_date = get_element_selector(container, SOLD_DATE_SELECTOR)
+        return get_element_str(sold_date, "::text")

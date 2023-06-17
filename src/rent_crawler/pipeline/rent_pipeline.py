@@ -13,16 +13,13 @@ class RentPipeline:
 
     def process_item(self, item, spider):
         urls = []
-        addresses = []
-        cities = []
-        regions = []
-        postcodes = []
+        municipalities = []
+        rental_types = []
+
         for element in item['list']:
             urls.append(element['url'])
-            addresses.append(element['address'])
-            cities.append(element['city'])
-            regions.append(element['region'])
-            postcodes.append(element['postcode'])
+            municipalities.append(element['municipality'])
+            rental_types.append(element['rental_type'])
 
-        return self._process.crawl(RentDetailSpider, urls=urls, addresses=addresses, cities=cities, regions=regions, postcodes=postcodes)
+        return self._process.crawl(RentDetailSpider, urls=urls, municipalities=municipalities, rental_types=rental_types)
     
