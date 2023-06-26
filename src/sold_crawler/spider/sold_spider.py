@@ -1,5 +1,5 @@
 import scrapy
-
+import time
 from src import save_file, get_element_selector, get_element_str, is_can_save_file
 from src.sold_crawler import SoldItem
 
@@ -27,7 +27,7 @@ class SoldSpider(scrapy.Spider):
 
         for url in urls:
             start_page = 1
-            end_page = 2
+            end_page = 206
             for page_number in range(start_page, end_page):
                 yield scrapy.Request(url=f"{url}/pg-{page_number}", callback=self.sold_parse)
 
@@ -37,16 +37,16 @@ class SoldSpider(scrapy.Spider):
         yield SoldItem(soldList=items)
 
     def _process(self):
-        SECTION_PARAM_SELECTOR = 'section.PropertiesList_propertiesContainer__j6ct_.PropertiesList_listViewGrid__oGuSL'
-        DIV_PARAM_SELECTOR = 'div.BasePropertyCard_propertyCardWrap__J0xUj'
+        SECTION_PARAM_SELECTOR = 'ul[data-testid="property-list-container"]'
+        DIV_PARAM_SELECTOR = 'li[data-testid="result-card"]'
 
         output = []
-        sections = get_element_selector(self._response, SECTION_PARAM_SELECTOR)
-        print(sections)
-        print(sections)
+
+        print("Pass initial process")
+        sections = self._response.css(SECTION_PARAM_SELECTOR)
 
         for section in sections:
-            divs = get_element_selector(section, DIV_PARAM_SELECTOR)
+            divs = section.css(DIV_PARAM_SELECTOR)
             for div in divs:
                 request_url = self._get_request_URL(div)
                 sold_date = self._get_sold_date(div)
@@ -59,21 +59,23 @@ class SoldSpider(scrapy.Spider):
                         'sold_date': sold_date,
                         'endPage': False
                     })
-        output[len(output) - 1]['endPage'] = True
+        if len(output) > 0:
+            output[len(output) - 1]['endPage'] = True
         return output
 
     def _get_request_URL(self, element_selector):
         request_url = 'https://www.realtor.com'
-        DIV_CONTAINER_SELECTOR = 'div[data-testid="card-content"]'
-        REQUEST_ATTR_SELECTOR = "a::attr(href)"
+        ANCHOR_SELECTOR = 'a[data-testid="property-anchor"]::attr(href)'
 
-        container = get_element_selector(element_selector, DIV_CONTAINER_SELECTOR)
-        request_url += get_element_str(container, REQUEST_ATTR_SELECTOR)
+        href = element_selector.css(ANCHOR_SELECTOR).get()
+        if href:
+            request_url += href
         return request_url
 
     def _get_sold_date(self, element_selector):
-        DIV_CONTAINER_SELECTOR = 'div[data-testid="card-content"]'
-        SOLD_DATE_SELECTOR = 'div.message'
-        container = get_element_selector(element_selector, DIV_CONTAINER_SELECTOR)
-        sold_date = get_element_selector(container, SOLD_DATE_SELECTOR)
-        return get_element_str(sold_date, "::text")
+        SOLD_DATE_CONTAINER_SELECTOR = 'div[data-testid="sold"]'
+        SOLD_DATE_TEXT_SELECTOR = '.statusText'
+
+        container = get_element_selector(element_selector, SOLD_DATE_CONTAINER_SELECTOR)
+        sold_date = get_element_str(container, SOLD_DATE_TEXT_SELECTOR)
+        return sold_date

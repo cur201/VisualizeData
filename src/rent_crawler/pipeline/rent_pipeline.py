@@ -21,5 +21,5 @@ class RentPipeline:
             municipalities.append(element['municipality'])
             rental_types.append(element['rental_type'])
 
-        return self._process.crawl(RentDetailSpider, urls=urls, municipalities=municipalities, rental_types=rental_types)
+        #return self._process.crawl(RentDetailSpider, urls=urls, municipalities=municipalities, rental_types=rental_types)
     

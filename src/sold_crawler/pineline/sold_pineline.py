@@ -9,14 +9,13 @@ class SoldPipeline:
         self._queue = []
 
     def process_item(self, item, spider):
-        pass
-        # urls = []
-        # sold_dates = []
-        #
-        # for element in item['soldList']:
-        #     urls.append(element['url'])
-        #     sold_dates.append(element['sold_date'])
-        #
-        # return self._process.crawl(SoldDetailSpider, urls=urls, sold_dates=sold_dates)
+        urls = []
+        sold_dates = []
+
+        for element in item['soldList']:
+            urls.append(element['url'])
+            sold_dates.append(element['sold_date'])
+
+        return self._process.crawl(SoldDetailSpider, urls=urls, sold_dates=sold_dates)
 
 

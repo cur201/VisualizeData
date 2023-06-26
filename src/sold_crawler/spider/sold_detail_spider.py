@@ -1,3 +1,5 @@
+import time
+
 import scrapy
 import csv
 import os
@@ -19,6 +21,7 @@ class SoldDetailSpider(scrapy.Spider):
         for i in range(len(self._urls)):
             url = self._urls[i]
             sold_date = self._sold_dates[i]
+            time.sleep(20)
             yield scrapy.Request(url=url, callback=self.sold_detail_parse,
                                  cb_kwargs=dict(sold_date=sold_date))
 
@@ -29,27 +32,27 @@ class SoldDetailSpider(scrapy.Spider):
     def _detail_process(self, sold_date):
         from src.sold_crawler import SoldDetailItem
         detail_item = SoldDetailItem()
-        DIV_PROPERTY_SELECTOR = 'div.hiyzem'
-        DIV_DETAIL_SELECTOR = 'div.etUKSQ'
-        property_selector = get_element_selector(self._response, DIV_PROPERTY_SELECTOR)[0]
-        # detail_selector = get_element_selector(self._response, DIV_DETAIL_SELECTOR)[0]
-        # print(property_selector)
-        # print(detail_selector)
 
-        price = self._get_property_price(property_selector)
-        municipality = self._get_sold_municipality(property_selector)
-        bedroom, bathroom, area = self._get_property_info(property_selector)
-        type, year = self._get_property_features(property_selector)
+        DIV_PROPERTY_PRICE = 'div[data-testid="last-sold-container"]'
+        div_price = get_element_selector(self._response, DIV_PROPERTY_PRICE)
+        DIV_PROPERTY_FACT = 'div[data-testid="pdp-home-facts"]'
+        div_property_fact = get_element_selector(self._response, DIV_PROPERTY_FACT)
+        DIV_PROPERTY_INFO = 'ul[data-testid="pdp-highlighted-facts"]'
+        div_property_info = get_element_selector(self._response, DIV_PROPERTY_INFO)
+        price = self._get_property_price(div_price)
+        municipality = self._get_sold_municipality(div_property_fact)
+        bedroom, bathroom, area = self._get_property_info(div_property_fact)
+        property_type, year_build = self._get_property_features(div_property_info)
         # compare, median = self._get_compare_median(self._response)
         detail_item['price'] = price
         detail_item['municipality'] = municipality
         detail_item['sold_date'] = sold_date
-        detail_item['property_type'] = type
+        detail_item['property_type'] = property_type
         detail_item['bedroom'] = bedroom
         detail_item['bathroom'] = bathroom
         detail_item['area'] = area
-        detail_item['year_built'] = year
-        # self._export_to_csv(detail_item)
+        detail_item['year_built'] = year_build
+        self._export_to_csv(detail_item)
 
     def _export_to_csv(self, detail_item):
         export_file = 'sold-data.csv'
@@ -76,7 +79,7 @@ class SoldDetailSpider(scrapy.Spider):
         df.to_csv(output_path, mode='a', header=False, index=False)
 
     def _get_property_price(self, property_selector):
-        PRICE_SELECTOR = 'h2.ignleU'
+        PRICE_SELECTOR = 'h2'
         price = get_element_selector(property_selector, PRICE_SELECTOR)
         return get_element_str(price, '::text')
 
@@ -89,16 +92,16 @@ class SoldDetailSpider(scrapy.Spider):
         INFO_SELECTOR = 'ul.chQkbR'
         LI_BED_SELECTOR = 'li[data-testid="property-meta-beds"] > span[data-testid="meta-value"]'
         LI_BATH_SELECTOR = 'li[data-testid="property-meta-baths"] > span[data-testid="meta-value"]'
-        LI_AREA_SELECTOR = 'li[data-testid="property-meta-sqft"]'
+        LI_AREA_SELECTOR = 'li[data-testid="property-meta-sqft"] span.meta-value'
 
         info = get_element_selector(property_selector, INFO_SELECTOR)
         li_bed = get_element_selector(info, LI_BED_SELECTOR)
         li_bath = get_element_selector(info, LI_BATH_SELECTOR)
         li_area = get_element_selector(info, LI_AREA_SELECTOR)
 
-        bedroom = get_element_str(li_bed, '::text') if len(li_bed) else '-'
-        bathroom = get_element_str(li_bath, '::text') if len(li_bath) else '-'
-        area = get_element_str(li_area, '::text') if len(li_area) else '-'
+        bedroom = get_element_str(li_bed, '::text').strip() if len(li_bed) else '-'
+        bathroom = get_element_str(li_bath, '::text').strip() if len(li_bath) else '-'
+        area = get_element_str(li_area, '::text').strip() if len(li_area) else '-'
         return bedroom, bathroom, area
 
     def _get_property_features(self, property_selector):
@@ -113,23 +116,20 @@ class SoldDetailSpider(scrapy.Spider):
         data_type = get_element_selector(div_type, DATA_SELECTOR)
         data_year = get_element_selector(div_year, DATA_SELECTOR)
 
-        type = get_element_str(data_type, '::text') if len(data_type) else '-'
+        property_type = get_element_str(data_type, '::text') if len(data_type) else '-'
         year = get_element_str(data_year, '::text') if len(data_year) else '-'
-        return type, year
-
+        return property_type, year
 
     def _get_compare_median(self, property_selector):
         COMPARE_PRICE_SELECTOR = 'h2[data-testid="more-expensive-headline"]'
         MEAN_PRICE_SELECTOR = 'h2[data-testid="neighborhood-median-price-card-headline"]'
-        test = 'div.joCQGe'
-        div = get_element_selector(property_selector, DIV_SELECTOR)[0]
-        print(div)
-        print(get_element_str(div, '::text'))
-        # compare_price = get_element_selector(div, COMPARE_PRICE_SELECTOR)
-        # mean_price = get_element_selector(div, MEAN_PRICE_SELECTOR)
-        # print(get_element_selector(div, test))
-        # print(compare_price, mean_price)
-        # print(get_element_str(compare_price, '::text'), get_element_str(mean_price, '::text'))
-        return 1, 2
+
+        compare_price = get_element_selector(property_selector, COMPARE_PRICE_SELECTOR)
+        mean_price = get_element_selector(property_selector, MEAN_PRICE_SELECTOR)
+
+        compare_price_value = get_element_str(compare_price[0], '::text') if compare_price else None
+        mean_price_value = get_element_str(mean_price[0], '::text') if mean_price else None
+
+        return compare_price_value, mean_price_value
 
 
