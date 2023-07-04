@@ -21,7 +21,7 @@ class SoldDetailSpider(scrapy.Spider):
         for i in range(len(self._urls)):
             url = self._urls[i]
             sold_date = self._sold_dates[i]
-            time.sleep(20)
+            time.sleep(10)
             yield scrapy.Request(url=url, callback=self.sold_detail_parse,
                                  cb_kwargs=dict(sold_date=sold_date))
 
@@ -43,7 +43,7 @@ class SoldDetailSpider(scrapy.Spider):
         municipality = self._get_sold_municipality(div_property_fact)
         bedroom, bathroom, area = self._get_property_info(div_property_fact)
         property_type, year_build = self._get_property_features(div_property_info)
-        # compare, median = self._get_compare_median(self._response)
+        compare, median = self._get_compare_median(self._response)
         detail_item['price'] = price
         detail_item['municipality'] = municipality
         detail_item['sold_date'] = sold_date
@@ -52,6 +52,8 @@ class SoldDetailSpider(scrapy.Spider):
         detail_item['bathroom'] = bathroom
         detail_item['area'] = area
         detail_item['year_built'] = year_build
+        detail_item['neighborhood_median_price'] = median
+        detail_item['compared_to_nearby_properties'] = compare
         self._export_to_csv(detail_item)
 
     def _export_to_csv(self, detail_item):
@@ -62,8 +64,8 @@ class SoldDetailSpider(scrapy.Spider):
         if not os.path.exists(output_path):
             with open(output_path, mode='w', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow(['price', 'municipality', 'sold_date ', 'property_type', 'bedroom', 'bathroom', 'area',
-                                 'year_built'])
+                writer.writerow(['price', 'municipality', 'sold_date', 'property_type', 'bedroom', 'bathroom', 'area',
+                                 'year_built', 'neighborhood_median_price', 'compared_to_nearby_properties'])
 
         data = {
             'price': [detail_item['price']],
@@ -74,6 +76,8 @@ class SoldDetailSpider(scrapy.Spider):
             'bathroom': [detail_item['bathroom']],
             'area': [detail_item['area']],
             'year_built': [detail_item['year_built']],
+            'neighborhood_median_price': [detail_item['neighborhood_median_price']],
+            'compared_to_nearby_properties': [detail_item['compared_to_nearby_properties']]
         }
         df = pd.DataFrame(data)
         df.to_csv(output_path, mode='a', header=False, index=False)
@@ -121,14 +125,11 @@ class SoldDetailSpider(scrapy.Spider):
         return property_type, year
 
     def _get_compare_median(self, property_selector):
-        COMPARE_PRICE_SELECTOR = 'h2[data-testid="more-expensive-headline"]'
-        MEAN_PRICE_SELECTOR = 'h2[data-testid="neighborhood-median-price-card-headline"]'
+        COMPARE_PRICE_SELECTOR = property_selector.css('h2[data-testid="more-expensive-headline"]::text')
+        MEAN_PRICE_SELECTOR = property_selector.css('h2[data-testid="neighborhood-median-price-card-headline"]::text')
 
-        compare_price = get_element_selector(property_selector, COMPARE_PRICE_SELECTOR)
-        mean_price = get_element_selector(property_selector, MEAN_PRICE_SELECTOR)
-
-        compare_price_value = get_element_str(compare_price[0], '::text') if compare_price else None
-        mean_price_value = get_element_str(mean_price[0], '::text') if mean_price else None
+        compare_price_value = COMPARE_PRICE_SELECTOR.get()
+        mean_price_value = MEAN_PRICE_SELECTOR.get()
 
         return compare_price_value, mean_price_value
 

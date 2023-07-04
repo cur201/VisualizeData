@@ -19,6 +19,8 @@ class SoldSpider(scrapy.Spider):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._response = None
+        print("Pass init")
+
 
     def start_requests(self):
         urls = [
@@ -26,14 +28,18 @@ class SoldSpider(scrapy.Spider):
         ]
 
         for url in urls:
-            start_page = 1
+            start_page = 16
             end_page = 206
+            time.sleep(30)
             for page_number in range(start_page, end_page):
                 yield scrapy.Request(url=f"{url}/pg-{page_number}", callback=self.sold_parse)
+                print("Pass request")
 
     def sold_parse(self, response):
         self._response = response
+        print("Pass get response")
         items = self._process()
+        print("Pass process")
         yield SoldItem(soldList=items)
 
     def _process(self):
@@ -42,11 +48,11 @@ class SoldSpider(scrapy.Spider):
 
         output = []
 
-        print("Pass initial process")
         sections = self._response.css(SECTION_PARAM_SELECTOR)
-
+        print(sections)
         for section in sections:
             divs = section.css(DIV_PARAM_SELECTOR)
+            print(divs)
             for div in divs:
                 request_url = self._get_request_URL(div)
                 sold_date = self._get_sold_date(div)
@@ -74,7 +80,7 @@ class SoldSpider(scrapy.Spider):
 
     def _get_sold_date(self, element_selector):
         SOLD_DATE_CONTAINER_SELECTOR = 'div[data-testid="sold"]'
-        SOLD_DATE_TEXT_SELECTOR = '.statusText'
+        SOLD_DATE_TEXT_SELECTOR = 'span.statusText'
 
         container = get_element_selector(element_selector, SOLD_DATE_CONTAINER_SELECTOR)
         sold_date = get_element_str(container, SOLD_DATE_TEXT_SELECTOR)
