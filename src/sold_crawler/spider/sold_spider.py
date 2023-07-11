@@ -28,7 +28,7 @@ class SoldSpider(scrapy.Spider):
         ]
 
         for url in urls:
-            start_page = 16
+            start_page = 1
             end_page = 206
             time.sleep(30)
             for page_number in range(start_page, end_page):
